@@ -38,6 +38,10 @@ export function CommandsTab() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [bumpOpen, setBumpOpen] = useState(false);
+  const [bumpVersion, setBumpVersion] = useState('');
+  const [bumpKey, setBumpKey] = useState<string>('bump-version');
+  const [bumpNotes, setBumpNotes] = useState('');
 
   const load = async () => {
     if (!token) return;
@@ -66,6 +70,14 @@ export function CommandsTab() {
   const handleRun = async (key: string, label: string) => {
     if (!token) return;
     if (!bridge?.connected) { setError('Bridge offline — запусти devops_bridge.py'); return; }
+
+    if (key === 'bump-version' || key === 'release-launcher') {
+      setBumpVersion('');
+      setBumpNotes('');
+      setBumpOpen(true);
+      setBumpKey(key);
+      return;
+    }
     if (!confirm(`Запустить "${label}" на ПК?`)) return;
     setBusyKey(key); setError(null);
     try {
@@ -74,6 +86,28 @@ export function CommandsTab() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка');
     } finally { setBusyKey(null); }
+  };
+
+  const handleBump = async () => {
+    if (!token) return;
+    const v = bumpVersion.trim();
+    if (!/^\d+\.\d+\.\d+$/.test(v)) {
+      setError('Версия должна быть X.Y.Z (например 1.0.19)');
+      return;
+    }
+    setBusyKey('bump-version');
+    setError(null);
+    try {
+      const notes = bumpNotes.trim() || (bumpKey === 'release-launcher' ? 'Обновление лаунчера' : '');
+      await api.createDevopsCommand(token, bumpKey, { version: v, notes });
+      setBumpOpen(false);
+      setBumpVersion('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка');
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const handleDelete = async (cmd: api.DevopsCommand) => {
@@ -91,6 +125,7 @@ export function CommandsTab() {
   const pending = commands.filter((c) => c.status === 'pending' || c.status === 'running').length;
 
   return (
+    <>
     <div className="h-full grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-5 overflow-hidden">
       <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar">
         <div className="flex items-center justify-between">
@@ -195,5 +230,74 @@ export function CommandsTab() {
         )}
       </div>
     </div>
+
+      {bumpOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6" onClick={() => setBumpOpen(false)}>
+          <div className="absolute inset-0 modal-backdrop" />
+          <div
+            className="relative w-[440px] glass-popover rounded-[24px] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 border-b border-white/[0.06]">
+              <h3 className="font-display text-lg font-bold text-white">Бамп версии лаунчера</h3>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Обновит package.json, tauri.conf.json и config.ts
+              </p>
+            </div>
+            <div className="p-5">
+              <label className="block text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                Новая версия
+              </label>
+              <input
+                type="text"
+                value={bumpVersion}
+                onChange={(e) => setBumpVersion(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && bumpKey === 'bump-version') void handleBump(); }}
+                autoFocus
+                placeholder="1.0.19"
+                className="w-full bg-black/40 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder:text-slate-600 outline-none focus:border-gold transition-colors"
+              />
+            </div>
+
+            {bumpKey === 'release-launcher' && (
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                  Release notes (что нового)
+                </label>
+                <textarea
+                  value={bumpNotes}
+                  onChange={(e) => setBumpNotes(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Новая вкладка Обновления, фиксы, изменения..."
+                  className="w-full bg-black/40 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-gold transition-colors resize-none"
+                />
+                <div className="text-[10px] font-mono text-slate-600 mt-1 text-right">
+                  {bumpNotes.length} / 500
+                </div>
+              </div>
+            )}
+            <div className="p-4 border-t border-white/[0.06] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBumpOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-white/5 transition-colors text-[11px] uppercase tracking-[0.12em] font-semibold"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleBump}
+                disabled={!bumpVersion.trim() || busyKey === 'bump-version'}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-abyss font-bold text-[11px] uppercase tracking-[0.12em] hover:shadow-glow-gold transition-all disabled:opacity-40"
+              >
+                {busyKey === 'bump-version' ? <Loader2 size={14} className="animate-spin" /> : null}
+                Запустить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
