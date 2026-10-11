@@ -1073,3 +1073,34 @@ export async function deleteEvent(token: string, id: number): Promise<void> {
   });
   if (!res.ok) throw new Error(await parseError(res));
 }
+
+
+// ============================================================
+// АДМИН: МОДЕРАЦИЯ КОММЕНТАРИЕВ
+// ============================================================
+
+export interface AdminComment {
+  id: number;
+  body: string;
+  created_at: string;
+  changelog_id: number;
+  author: { user_id: number; username: string; avatar_url: string | null };
+  changelog_title: string;
+  changelog_version: string | null;
+}
+
+export async function getAllComments(token: string, limit = 200): Promise<AdminComment[]> {
+  const res = await fetch(`${API_BASE}/admin/changelog/comments?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function deleteAdminComment(token: string, id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/changelog/comments/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+}
