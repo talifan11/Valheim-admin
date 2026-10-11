@@ -17,6 +17,7 @@ const SCREEN_LABELS: Record<ScreenId, string> = {
   mods: 'Моды',
   news: 'Новости',
   changelog: 'Обновления',
+  events: 'События',
   forum: 'Форум',
   chat: 'Чат',
 };

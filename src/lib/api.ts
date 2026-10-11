@@ -994,3 +994,82 @@ export async function deleteChangelogEntry(token: string, id: number): Promise<v
   });
   if (!res.ok) throw new Error(await parseError(res));
 }
+
+
+// ============================================================
+// МОДЫ (метаданные для админа)
+// ============================================================
+
+export interface ModMeta {
+  name: string;
+  filename: string;
+  mandatory: boolean;
+  enabled_default: boolean;
+  description: string;
+  category: string;
+  disabled_by_users: number;
+}
+
+export async function getAdminModsMeta(token: string): Promise<ModMeta[]> {
+  const res = await fetch(`${API_BASE}/admin/mods/meta`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function updateModMeta(
+  token: string,
+  modName: string,
+  patch: { mandatory?: boolean; enabled_default?: boolean; description?: string },
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/mods/${encodeURIComponent(modName)}/meta`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+}
+
+// ============================================================
+// СОБЫТИЯ (для админки)
+// ============================================================
+
+export interface EventParticipant {
+  user_id: number;
+  username: string;
+  avatar_url: string | null;
+}
+
+export interface AdminEvent {
+  id: number;
+  title: string;
+  description: string;
+  starts_at: string;
+  category: string;
+  location: string | null;
+  max_slots: number | null;
+  author_id: number;
+  created_at: string;
+  status: string;
+  author: { user_id: number; username: string; avatar_url: string | null };
+  participants: EventParticipant[];
+  participants_count: number;
+  joined: boolean;
+}
+
+export async function getAdminEvents(token: string): Promise<AdminEvent[]> {
+  const res = await fetch(`${API_BASE}/events`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function deleteEvent(token: string, id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/events/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+}

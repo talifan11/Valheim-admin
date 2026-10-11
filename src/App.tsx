@@ -11,6 +11,7 @@ import { DevBoard } from './screens/DevBoard';
 import { Mods } from './screens/Mods';
 import { Devops } from './screens/Devops';
 import { Changelog } from './screens/Changelog';
+import { Events } from './screens/Events';
 import { Sidebar, type ScreenId } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 
@@ -38,6 +39,7 @@ export function App() {
           {screen === 'dev' && <DevBoard />}
           {screen === 'devops' && <Devops />}
           {screen === 'changelog' && <Changelog />}
+          {screen === 'events' && <Events />}
         </main>
       </div>
     </div>

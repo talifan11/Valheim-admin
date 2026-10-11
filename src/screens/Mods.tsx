@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Loader2, Upload, Power, PowerOff, Trash2, FileCode2, FileCog,
-  AlertCircle, RefreshCw, Package, Search, X, Check, Settings2,
-} from 'lucide-react';
+  AlertCircle, RefreshCw, Package, Search, X, Check, Settings2, Crown } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import * as api from '../lib/api';
 import { StatusPill } from '../components/ui/StatusPill';
@@ -26,6 +25,7 @@ function fmtDate(iso: string): string {
 export function Mods() {
   const token = useAuthStore((s) => s.token);
   const [data, setData] = useState<api.ModsList | null>(null);
+  const [meta, setMeta] = useState<api.ModMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -48,8 +48,12 @@ export function Mods() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.getModsList(token);
+      const [res, m] = await Promise.all([
+        api.getModsList(token),
+        api.getAdminModsMeta(token),
+      ]);
       setData(res);
+      setMeta(m);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка');
     } finally {
@@ -180,6 +184,20 @@ export function Mods() {
     const q = query.toLowerCase();
     return data.configs.filter((c) => c.rel_path.toLowerCase().includes(q));
   }, [data, query]);
+
+  const getMetaFor = (name: string): api.ModMeta | undefined =>
+    meta.find((m) => m.name === name.replace(/\.dll$/, ''));
+
+  const handleToggleMandatory = async (modName: string, current: boolean) => {
+    if (!token) return;
+    try {
+      await api.updateModMeta(token, modName, { mandatory: !current });
+      const fresh = await api.getAdminModsMeta(token);
+      setMeta(fresh);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
 
   const pluginsEnabled = data?.plugins.filter((p) => !p.disabled).length ?? 0;
   const pluginsDisabled = data?.plugins.filter((p) => p.disabled).length ?? 0;
@@ -373,13 +391,31 @@ export function Mods() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[13px] font-semibold text-slate-200 truncate">
                               {mod.name}
                             </span>
                             {mod.disabled && (
                               <StatusPill tone="slate">выкл</StatusPill>
                             )}
+                            {(() => {
+                              const m = getMetaFor(mod.name);
+                              if (!m) return null;
+                              return (
+                                <>
+                                  {m.mandatory && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gold/10 border border-gold/25 text-gold text-[9px] font-bold uppercase tracking-wider">
+                                      <Crown size={9} /> Обязательный
+                                    </span>
+                                  )}
+                                  {!m.mandatory && m.disabled_by_users > 0 && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-slate-500 text-[9px] font-bold">
+                                      {m.disabled_by_users} откл.
+                                    </span>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                           <div className="flex items-center gap-3 text-[10px] text-slate-600 font-mono mt-0.5">
                             <span>{fmtSize(mod.size)}</span>
@@ -408,6 +444,24 @@ export function Mods() {
                             )}
                             {mod.disabled ? 'Включить' : 'Отключить'}
                           </button>
+                          {(() => {
+                            const m = getMetaFor(mod.name);
+                            if (!m) return null;
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleMandatory(m.name, m.mandatory)}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                                  m.mandatory
+                                    ? 'text-gold bg-gold/10 hover:bg-gold/20'
+                                    : 'text-slate-500 hover:text-gold hover:bg-gold/10'
+                                }`}
+                                title={m.mandatory ? 'Снять обязательность' : 'Сделать обязательным'}
+                              >
+                                <Crown size={12} />
+                              </button>
+                            );
+                          })()}
                           <button
                             type="button"
                             onClick={() => handleDelete(mod)}
