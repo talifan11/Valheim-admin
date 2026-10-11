@@ -4,15 +4,17 @@ import { PatchesTab } from '../components/devops/PatchesTab';
 import { CommandsTab } from '../components/devops/CommandsTab';
 import { SqlTab } from '../components/devops/SqlTab';
 import { LogsTab } from '../components/devops/LogsTab';
+import { TerminalTab } from '../components/devops/TerminalTab';
 import { SystemWidget } from '../components/devops/SystemWidget';
 import { BridgeWidget } from '../components/devops/BridgeWidget';
 
-type Tab = 'patches' | 'commands' | 'sql' | 'logs';
+type Tab = 'patches' | 'commands' | 'sql' | 'terminal' | 'logs';
 
 const TABS: { id: Tab; label: string; icon: typeof Wrench }[] = [
   { id: 'patches', label: 'Патчи', icon: FileCode2 },
   { id: 'commands', label: 'Команды', icon: Rocket },
   { id: 'sql', label: 'SQL', icon: Database },
+  { id: 'terminal', label: 'Терминал', icon: Terminal },
   { id: 'logs', label: 'Логи', icon: Terminal },
 ];
 
@@ -56,6 +58,7 @@ export function Devops() {
         {tab === 'patches' && <PatchesTab />}
         {tab === 'commands' && <CommandsTab />}
         {tab === 'sql' && <SqlTab />}
+        {tab === 'terminal' && <TerminalTab />}
         {tab === 'logs' && <LogsTab />}
       </div>
     </div>

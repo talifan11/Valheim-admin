@@ -873,3 +873,76 @@ export async function getDevopsLogs(token: string, lines = 200): Promise<{ logs:
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
+
+// ============================================================
+// DEVOPS TERMINAL
+// ============================================================
+
+export interface TerminalResult {
+  stdout: string;
+  stderr: string;
+  exit_code: number;
+  duration_ms: number;
+}
+
+export interface TerminalHistoryEntry {
+  id: number;
+  scope: 'vps' | 'local';
+  command: string;
+  stdout: string;
+  stderr: string;
+  exit_code: number;
+  duration_ms: number;
+  created_at: string;
+}
+
+export async function execVpsCommand(token: string, command: string, timeout = 30): Promise<TerminalResult> {
+  const res = await fetch(`${API_BASE}/devops/terminal/exec`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command, timeout }),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function execLocalCommand(token: string, command: string, timeout = 300): Promise<{ command_id: number }> {
+  const res = await fetch(`${API_BASE}/devops/terminal/local`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command, timeout }),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function getLocalCommandResult(token: string, commandId: number): Promise<{
+  status: string;
+  stdout?: string;
+  exit_code?: number;
+  duration_ms?: number;
+  message?: string;
+}> {
+  const res = await fetch(`${API_BASE}/devops/terminal/local/result/${commandId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function getTerminalHistory(token: string, scope = '', limit = 50): Promise<TerminalHistoryEntry[]> {
+  const q = scope ? `?scope=${scope}&limit=${limit}` : `?limit=${limit}`;
+  const res = await fetch(`${API_BASE}/devops/terminal/history${q}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function deleteTerminalHistory(token: string, id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/devops/terminal/history/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+}
