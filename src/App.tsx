@@ -10,6 +10,7 @@ import { Chat } from './screens/Chat';
 import { DevBoard } from './screens/DevBoard';
 import { Mods } from './screens/Mods';
 import { Devops } from './screens/Devops';
+import { Changelog } from './screens/Changelog';
 import { Sidebar, type ScreenId } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 
@@ -36,6 +37,7 @@ export function App() {
           {screen === 'chat' && <Chat />}
           {screen === 'dev' && <DevBoard />}
           {screen === 'devops' && <Devops />}
+          {screen === 'changelog' && <Changelog />}
         </main>
       </div>
     </div>

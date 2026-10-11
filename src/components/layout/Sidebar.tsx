@@ -1,10 +1,9 @@
 import {
   LayoutDashboard, Users, Rocket, Newspaper, MessageSquare, MessageCircle,
-  LogOut, Settings, ChevronDown, Kanban, Package, Wrench,
-} from 'lucide-react';
+  LogOut, Settings, ChevronDown, Kanban, Package, Wrench, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
-export type ScreenId = 'dashboard' | 'users' | 'launcher' | 'news' | 'forum' | 'chat' | 'dev' | 'mods' | 'devops';
+export type ScreenId = 'dashboard' | 'users' | 'launcher' | 'news' | 'forum' | 'chat' | 'dev' | 'mods' | 'devops' | 'changelog';
 
 interface Props {
   active: ScreenId;
@@ -40,6 +39,7 @@ const SECTIONS: Section[] = [
     title: 'Контент',
     items: [
       { id: 'news', label: 'Новости', icon: Newspaper },
+      { id: 'changelog', label: 'Обновления', icon: Sparkles },
       { id: 'launcher', label: 'Лаунчер', icon: Rocket },
       { id: 'mods', label: 'Моды', icon: Package },
     ],

@@ -946,3 +946,51 @@ export async function deleteTerminalHistory(token: string, id: number): Promise<
   });
   if (!res.ok) throw new Error(await parseError(res));
 }
+
+
+// ============================================================
+// ADM: CHANGELOG
+// ============================================================
+
+export interface AdminChangelogEntry {
+  id: number;
+  version: string | null;
+  title: string;
+  body: string;
+  category: string;
+  created_at: string;
+  author: { username: string; avatar_url: string | null } | null;
+}
+
+export interface ChangelogCreatePayload {
+  title: string;
+  body: string;
+  version?: string | null;
+  category?: string;
+}
+
+export async function getAdminChangelog(token: string): Promise<AdminChangelogEntry[]> {
+  const res = await fetch(`${API_BASE}/admin/changelog`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function createChangelogEntry(token: string, payload: ChangelogCreatePayload): Promise<{ id: number }> {
+  const res = await fetch(`${API_BASE}/admin/changelog`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+export async function deleteChangelogEntry(token: string, id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/admin/changelog/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+}
